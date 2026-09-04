@@ -2,7 +2,7 @@
 title: 260904
 description: 第1周工作与组会总结
 published: true
-date: 2026-09-04T09:49:36.212Z
+date: 2026-09-04T09:58:05.331Z
 tags: 
 editor: ckeditor
 dateCreated: 2026-09-04T09:35:57.766Z
@@ -14,7 +14,21 @@ dateCreated: 2026-09-04T09:35:57.766Z
 <p>&nbsp;</p>
 <p><strong>【But！】</strong></p>
 <p>1、理论上分类0（完全不疲劳）和2（完全疲劳）应该分得很开，但实际上聚类结果反而把类别1（中度疲劳）分开了。</p>
-<p>&nbsp;</p>
+<figure class="table">
+  <table>
+    <tbody>
+      <tr>
+        <td>
+          <figure class="image image_resized" style="width:78.93%;"><img src="/tsne.png"></figure>
+        </td>
+        <td>
+          <figure class="image image_resized" style="width:74.96%;"><img src="/confusion.png"></figure>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</figure>
+<p>这个原因似乎是什么“纺锤效应”，有点类似于投骰子，扔到1或者6的概率都不大，扔到中间值的概率大。</p>
 <p>2、数据集内数据质量层次不齐，不同subject最后的分类准确率差别较大，分析得到的结论是志愿者采集设备的问题，有比较明显的热噪声。</p>
 <p>&nbsp;</p>
 <p>看对应subject的视频可以看出，54号阿三的视频质量实在太糊了，本身长得就黑，这下更是浆糊。</p>
