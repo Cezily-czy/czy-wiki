@@ -2,7 +2,7 @@
 title: 260904
 description: 第1周工作与组会总结
 published: true
-date: 2026-09-04T09:58:05.331Z
+date: 2026-09-04T10:11:11.524Z
 tags: 
 editor: ckeditor
 dateCreated: 2026-09-04T09:35:57.766Z
@@ -14,22 +14,17 @@ dateCreated: 2026-09-04T09:35:57.766Z
 <p>&nbsp;</p>
 <p><strong>【But！】</strong></p>
 <p>1、理论上分类0（完全不疲劳）和2（完全疲劳）应该分得很开，但实际上聚类结果反而把类别1（中度疲劳）分开了。</p>
-<figure class="table">
-  <table>
-    <tbody>
-      <tr>
-        <td>
-          <figure class="image image_resized" style="width:78.93%;"><img src="/tsne.png"></figure>
-        </td>
-        <td>
-          <figure class="image image_resized" style="width:74.96%;"><img src="/confusion.png"></figure>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</figure>
+<figure class="image image_resized" style="width:26.47%;"><img src="/confusion.png"></figure>
+<figure class="image image_resized" style="width:26.41%;"><img src="/tsne.png" alt="1"></figure>
 <p>这个原因似乎是什么“纺锤效应”，有点类似于投骰子，扔到1或者6的概率都不大，扔到中间值的概率大。</p>
+<p>详细点说是这样的：数据集内有三个分类：不疲劳、中度疲劳、重度疲劳，对于人类来说，其实常态下往往是处于中间态（即可以认为是不好也不坏，不疲劳但也并非超级放松），所以实际上中间态特征是最显著的，可以把疲劳/放松看成常态的特解，常态是通解，网络更容易学习到这种通解，所以聚类效果更好。</p>
+<p>而对于放松/疲劳而言，这两种状态的特征是基于通解衍生出的特解，在网络学习到通解，并且出现这两个新状态时，由于缺乏标签的约束（指更加严格的标签，这里只有0，1，2），网络就极易忽视放松/疲劳这两种状态本身的生理特征，转而基于已经学习到的通解，去探索一条捷径，最后划入局部最优解，这就反映为网络可以辨认中间态，对放松/疲劳却几乎没有任何辨别能力。</p>
+<p>当然，这也可能是因为数据集规模太小，或增强没做到位导致的。</p>
 <p>2、数据集内数据质量层次不齐，不同subject最后的分类准确率差别较大，分析得到的结论是志愿者采集设备的问题，有比较明显的热噪声。</p>
-<p>&nbsp;</p>
+<figure class="image image_resized" style="width:45.92%;"><img src="/subject_acc.png"></figure>
 <p>看对应subject的视频可以看出，54号阿三的视频质量实在太糊了，本身长得就黑，这下更是浆糊。</p>
+<p>wya裁剪视频的方式有点粗糙，他锚定每个clip的第0帧会出现人脸，但观察下来实际上并没有，cls建议从第10秒开始，等视频稳定后再裁剪，可以尝试。</p>
+<p>&nbsp;</p>
+<p>【And：】</p>
+<p>&nbsp;</p>
 <p>&nbsp;</p>
