@@ -2,7 +2,7 @@
 title: 260915
 description: 新的长序列网络
 published: true
-date: 2026-09-15T05:26:37.105Z
+date: 2026-09-15T05:27:24.785Z
 tags: 
 editor: ckeditor
 dateCreated: 2026-09-15T03:56:26.615Z
@@ -11,7 +11,7 @@ dateCreated: 2026-09-15T03:56:26.615Z
 <p style="text-align:justify;"><strong>【What？】</strong></p>
 <p style="text-align:justify;">1、网络设计</p>
 <p style="text-align:justify;">因为疲劳度检测准确率依赖于长时间的观测，所以设计了一个用于处理长序列视频的网络，Hybrid_v1堂堂登场。思路是继承wya的关键假说：即视频节律性与rPPG自相似矩阵的matrix_loss约束，以及远近端空间注意力模块，保留了这两个关键的思路，并尝试使用压缩patch的方法解决3DCNN在处理超长序列信号时感受野不足、参数量爆炸的问题，总体流程图如下：</p>
-<figure class="image image_resized" style="width:70.15%;"><img src="/grid.png"></figure>
+<figure class="image image_resized" style="width:100%;"><img src="/grid.png"></figure>
 <p style="text-align:justify;">2、艰难下载数据集中，wya没给他转变数据集的代码，初步观察应该就是zxy转UBFC的代码，但实际情况还没试过，尤其是<mark class="marker-yellow">那些txt文档，生成的条件成谜。</mark></p>
 <p style="text-align:justify;">3、申请了两个数据集，<mark class="marker-yellow">UL-DD和InCarEmo</mark>，但申请还没通过，也许需要再等等，后者也许还能用于情绪识别。</p>
 <p style="text-align:justify;"><a href="https://zenodo.org/me/requests?q=&amp;f=is_open%3Atrue&amp;f=shared_with_me%3Afalse&amp;l=list&amp;p=1&amp;s=10&amp;sort=newest">Requests | Zenodo</a></p>
