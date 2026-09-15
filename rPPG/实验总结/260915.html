@@ -2,26 +2,37 @@
 title: 260915
 description: 新的长序列网络
 published: true
-date: 2026-09-15T05:28:31.162Z
+date: 2026-09-15T06:20:36.669Z
 tags: 
 editor: ckeditor
 dateCreated: 2026-09-15T03:56:26.615Z
 -->
 
 <p style="text-align:justify;"><strong>【What？】</strong></p>
-<p style="text-align:justify;">1、网络设计</p>
-<p style="text-align:justify;">因为疲劳度检测准确率依赖于长时间的观测，所以设计了一个用于处理长序列视频的网络，Hybrid_v1堂堂登场。思路是继承wya的关键假说：即视频节律性与rPPG自相似矩阵的matrix_loss约束，以及远近端空间注意力模块，保留了这两个关键的思路，并尝试使用压缩patch的方法解决3DCNN在处理超长序列信号时感受野不足、参数量爆炸的问题，总体流程图如下：</p>
+<p style="text-align:justify;">1、<mark class="marker-yellow">网络设计</mark></p>
+<p style="text-align:justify;">因为疲劳度检测准确率依赖于长时间的观测，所以设计了一个用于处理长序列视频的网络，Hybrid_v1堂堂登场。</p>
+<p style="text-align:justify;">思路是继承wya的关键假说：<mark class="marker-yellow">即视频节律性与rPPG自相似矩阵的matrix_loss约束，以及远近端空间注意力模块，保留了这两个关键的思路。</mark></p>
+<p style="text-align:justify;">尝试使用<mark class="marker-yellow">压缩patch</mark>的方法解决3DCNN在处理超长序列信号时感受野不足、参数量爆炸的问题，总体流程图如下：</p>
 <figure class="image image_resized" style="width:75%;"><img src="/grid.png"></figure>
-<p style="text-align:justify;">2、艰难下载数据集中，wya没给他转变数据集的代码，初步观察应该就是zxy转UBFC的代码，但实际情况还没试过，尤其是<mark class="marker-yellow">那些txt文档，生成的条件成谜。</mark></p>
-<p style="text-align:justify;">3、申请了两个数据集，<mark class="marker-yellow">UL-DD和InCarEmo</mark>，但申请还没通过，也许需要再等等，后者也许还能用于情绪识别。</p>
-<p style="text-align:justify;"><a href="https://zenodo.org/me/requests?q=&amp;f=is_open%3Atrue&amp;f=shared_with_me%3Afalse&amp;l=list&amp;p=1&amp;s=10&amp;sort=newest">Requests | Zenodo</a></p>
-<p style="text-align:justify;"><a href="https://drive.google.com/drive/folders/1YlwzDLG45BA3oIrOrjdCaIV9dHOPKtL5?usp=drive_link">https://drive.google.com/drive/folders/1YlwzDLG45BA3oIrOrjdCaIV9dHOPKtL5?usp=drive_link</a></p>
+<p style="text-align:justify;"><mark class="marker-yellow">Stage 0：</mark></p>
+<p style="text-align:justify;">是一个简单的图像压缩，通过将长序列分成多个短片段，对段片段内的每一帧图像进行卷积+池化的操作缩小尺寸，然后拼成一个经过尺寸压缩的短序列。</p>
+<p style="text-align:justify;"><mark class="marker-yellow">支路A：</mark></p>
+<p style="text-align:justify;">A1：首先，将压缩过后的序列输入wya的空间注意力模块，通过计算远近视角能量图得到一个注意力矩阵，再将注意力矩阵和Stage0的输入展平并permute成[B×1800,32,16×16][1800,16×16,1]，两者相乘permute后得到[B,1800,32,1]，相当于每帧画面都对应一个C维的向量。</p>
+<p style="text-align:justify;">A2：然后进行初步压缩，把1800帧分成50×36，并舍弃一个超级帧，得到[B,49,36,32]，这里的49即为超级帧，每个超级帧对应着36个时序帧。</p>
+<p style="text-align:justify;">A3：基于奈奎斯特采样定理，如果只对49个超级帧计算SSM，那么采样频率就是49/60=0.82Hz，所以这里要计算两次SSM，首先是细粒度SSM，在36个时序帧内部计算，这样36/1.2=30Hz，足以覆盖生理波段，这里的SSM计算方法完全是按照wya来的，跟rPPG的SSM计算法不一样，由于网络会自己学习到节律性，所以不需要像rPPG信号那样划分短窗口计算窗口间的SSM。</p>
+<p style="text-align:justify;">A4：wya的rhythm_reader模块，使用2DCNN提取SSM矩阵的节律性，得到[B,49,16]，每个超级帧内部36帧的SSM矩阵卷为16维的向量。</p>
+<p style="text-align:justify;">A5：<mark class="marker-yellow">使用1D膨胀因果卷积，学习49个超级帧之间的节律变化。</mark></p>
+<p style="text-align:justify;">A6、7：再计算超级帧的SSM，得到粗粒度SSM并对A5的输出做全局平均化，得到全局节律特征序列。</p>
+<p style="text-align:justify;"><mark class="marker-yellow">支路B：</mark></p>
+<p style="text-align:justify;">这个支路其实没什么好说的，就是之前非常原始的想法，直接通过CNN编码的方式把1800帧图片压缩到一张特征图上，实际只要3个size为3的CNN层就可以把感受野堆到27×27大小，对于每个超级帧8×8的尺寸来讲已经绰绰有余，可以捕捉到相邻帧之间的画面特征，这条支路是缺少时序信息的，所以最后把AB两个支路映射到同一个空间中concat，输入给分类头进行分类，相当于时序-空间双特征做疲劳度分类，<mark class="marker-yellow">wya的网络里应该是缺少B支路提供的空间特征的，或者说空间特征在SpatialAttention的时候就已经被转换成了注意力图，这里尝试引入空间特征，看看效果是否有改善。</mark></p>
+<p style="text-align:justify;">2、对于数据集，UL-DD数据集已经申请下来了，可以扩大数据集进行实验。</p>
 <p style="text-align:justify;">&nbsp;</p>
 <p style="text-align:justify;"><strong>【But！】</strong></p>
-<p style="text-align:justify;">1、该死的堡垒机服务器不连外网，导致我连agent都装不了。</p>
-<p style="text-align:justify;">2、做rPPG疲劳检测的人也太少了，完全没有参考的内容啊靠！wya的方法真的是肉眼可见的简单，这么简单的方法还真的有用……因为在我看来似乎只是一个背景去噪。</p>
+<p style="text-align:justify;">1、周一lly他们开会的时候提到数据集清洗的问题，我怀疑wya清洗的数据集还是存在问题的，包括但不限于：某些帧中未必存在的人脸、不合理的数据增强方式（随机遮挡）、部分遗漏未preprocess的数据集，也许这个工作要提上日程。</p>
+<p style="text-align:justify;">2、UL-DD数据集的分类标签只有疲劳/不疲劳，没有中间值，这几次的实验做下来感觉<mark class="marker-yellow">三分类实在不可靠，数据集甚至都可能标记错误，所以要不还是转成二分类好了？</mark></p>
+<p style="text-align:justify;">2、长序列rPPG信号提取仍存有问题，<mark class="marker-yellow">拿短序列的拼接到一起真的可靠吗？不会出现截断波形的情况吗？</mark></p>
 <p style="text-align:justify;">&nbsp;</p>
 <p style="text-align:justify;"><strong>【Then：】</strong></p>
-<p style="text-align:justify;">1、<mark class="marker-yellow">让cls处理一下wya的账号密码</mark>，去考古挖挖代码。</p>
-<p style="text-align:justify;">2、准备进行三分类数据集的测试，不清楚wya有没有试过三分类的实验。</p>
+<p style="text-align:justify;">1、处理数据集，细细地处理，回归二分类，不要好高骛远。</p>
+<p style="text-align:justify;">2、试试把短序列rPPG信号拼起来看看有没有用。</p>
 <p style="text-align:justify;">3、杂七杂八的学习，包括<mark class="marker-yellow">GAN和INN。</mark></p>
