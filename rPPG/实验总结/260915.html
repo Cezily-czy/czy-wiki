@@ -2,13 +2,13 @@
 title: 260915
 description: 新的长序列网络
 published: true
-date: 2026-09-15T06:20:36.669Z
+date: 2026-09-15T08:35:32.665Z
 tags: 
 editor: ckeditor
 dateCreated: 2026-09-15T03:56:26.615Z
 -->
 
-<p style="text-align:justify;"><strong>【What？】</strong></p>
+<p><strong>【What？】</strong></p>
 <p style="text-align:justify;">1、<mark class="marker-yellow">网络设计</mark></p>
 <p style="text-align:justify;">因为疲劳度检测准确率依赖于长时间的观测，所以设计了一个用于处理长序列视频的网络，Hybrid_v1堂堂登场。</p>
 <p style="text-align:justify;">思路是继承wya的关键假说：<mark class="marker-yellow">即视频节律性与rPPG自相似矩阵的matrix_loss约束，以及远近端空间注意力模块，保留了这两个关键的思路。</mark></p>
@@ -29,10 +29,15 @@ dateCreated: 2026-09-15T03:56:26.615Z
 <p style="text-align:justify;">&nbsp;</p>
 <p style="text-align:justify;"><strong>【But！】</strong></p>
 <p style="text-align:justify;">1、周一lly他们开会的时候提到数据集清洗的问题，我怀疑wya清洗的数据集还是存在问题的，包括但不限于：某些帧中未必存在的人脸、不合理的数据增强方式（随机遮挡）、部分遗漏未preprocess的数据集，也许这个工作要提上日程。</p>
+<p style="text-align:justify;">补充：数据集的问题确实比较严重，<mark class="marker-yellow">数据集的规模实在太小了，</mark>尤其是test_set，样本量太少，一共就39个，每个分类是13例，所以只要稍微预测错or对一个样本，最后的单分类准确率就会波动至少7%，所以test准确率特别不稳定，如图所示：</p>
+<figure class="image"><img src="/gridraw_long_4.jpg"></figure>
+<p>然而，即使是这样，我们也可以从这个acc图里看出点问题，那就是三分类的总体准确率a&lt;&lt;d≈m，也就是说网络比较容易区分轻度疲劳和重度疲劳，这和第一次实验比起来已经算有进步了，因为用wya的网络实验，它甚至只能区分m，a和d完全识别不了。</p>
 <p style="text-align:justify;">2、UL-DD数据集的分类标签只有疲劳/不疲劳，没有中间值，这几次的实验做下来感觉<mark class="marker-yellow">三分类实在不可靠，数据集甚至都可能标记错误，所以要不还是转成二分类好了？</mark></p>
 <p style="text-align:justify;">2、长序列rPPG信号提取仍存有问题，<mark class="marker-yellow">拿短序列的拼接到一起真的可靠吗？不会出现截断波形的情况吗？</mark></p>
 <p style="text-align:justify;">&nbsp;</p>
 <p style="text-align:justify;"><strong>【Then：】</strong></p>
 <p style="text-align:justify;">1、处理数据集，细细地处理，回归二分类，不要好高骛远。</p>
 <p style="text-align:justify;">2、试试把短序列rPPG信号拼起来看看有没有用。</p>
-<p style="text-align:justify;">3、杂七杂八的学习，包括<mark class="marker-yellow">GAN和INN。</mark></p>
+<p style="text-align:justify;">补充：有用，但仅限于使用预训练的rhythm_former，SSPD已经完全不能再战了，死区实在太多，导致我现在甚至开始怀疑SSPD能不能在这个数据集上提取到有意义的rPPG信号，<mark class="marker-yellow">wya当时是怎么做到的？</mark>明明是处理同一长度的信号（1800帧切分为12个150帧片段），区别也太大了，现在虽然还是有尖峰，但那是运动模糊带来的（maybe）至少周期性还算清楚：</p>
+<figure class="image image_resized" style="width:32.29%;"><img src="/sspd_rppg.jpg"></figure>
+<figure class="image image_resized" style="width:32.41%;"><img src="/rhythmformer_rppg.jpg"></figure>
