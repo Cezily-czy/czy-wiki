@@ -2,10 +2,22 @@
 title: 260917
 description: Hybrid_v1的一些补充和优化思路
 published: true
-date: 2026-09-17T09:00:57.762Z
+date: 2026-09-17T09:27:11.431Z
 tags: 
 editor: ckeditor
 dateCreated: 2026-09-17T09:00:57.762Z
 -->
 
-<p>11</p>
+<p style="text-align:justify;"><strong>【What？】</strong></p>
+<p style="text-align:justify;">1、扩大了数据集的规模，原来一段视频截单个1800帧片段，现在改为把完整视频切成四个片段，每个片段截出1800帧，相当于把数据集扩大四倍。（其中由于人脸遮挡等因素，有缺失）</p>
+<p style="text-align:justify;">2、现有模型为了batch_size，在压缩图片时对通道数的阉割过多，通道数疑似有点少，Spatial分支（分支B）是用来提取视频特征的分支，但是为了妥协显存，使用的通道数嫌少，所以稍微扩大了点（或在压缩时保留了更大的HW）。</p>
+<p style="text-align:justify;">3、加入了wya的时间注意力模块，不知道他当时为什么要删除这个模块？先做实验看看有没有问题。</p>
+<p style="text-align:justify;">&nbsp;</p>
+<p style="text-align:justify;"><strong>【But！】</strong></p>
+<p style="text-align:justify;">1、压缩时突然发现特征图不对劲，仍然能看出人脸的框架，后来发现逐帧压缩时居然没加BN和GeLu，已补上。</p>
+<p style="text-align:justify;">2、对于分支A的SSM图计算时出现问题，coarse-SSM可以看出斜纹条纹，但fine-SSM（36帧内部的SSM相似图在上次实验后发现了严重问题</p>
+<p style="text-align:justify;">&nbsp;</p>
+<p style="text-align:justify;"><strong>【Then：】</strong></p>
+<p style="text-align:justify;">1、<mark class="marker-yellow">让cls处理一下wya的账号密码</mark>，去考古挖挖代码。</p>
+<p style="text-align:justify;">2、准备进行三分类数据集的测试，不清楚wya有没有试过三分类的实验。</p>
+<p style="text-align:justify;">3、杂七杂八的学习，包括<mark class="marker-yellow">GAN和INN。</mark></p>
