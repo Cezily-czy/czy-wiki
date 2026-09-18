@@ -2,7 +2,7 @@
 title: 260917
 description: Hybrid_v1的一些补充和优化思路
 published: true
-date: 2026-09-18T05:57:34.310Z
+date: 2026-09-18T06:02:50.465Z
 tags: 
 editor: ckeditor
 dateCreated: 2026-09-17T09:00:57.762Z
@@ -17,6 +17,7 @@ dateCreated: 2026-09-17T09:00:57.762Z
 <p style="text-align:justify;">1、压缩时突然发现特征图不对劲，仍然能看出人脸的框架，后来发现逐帧压缩时居然没加BN和GeLu，已补上。</p>
 <p style="text-align:justify;">2、对于分支A的SSM图计算时出现问题，coarse-SSM可以看出斜纹条纹，但fine-SSM（36帧内部的SSM相似图）在上次实验后发现了严重问题，原因是在计算matrix损失时，计算的实际上是coarse-ssm和rppg-ssm的损失，原来的做法是把 49 组取平均后对齐全局矩阵，这等价于允许“每组都塌缩成同一个常数矩阵”的解，意思是fine-ssm实际上只是个中间量，并没有直接用来计算fine-ssm和对应区间rppg-ssm的损失，而是把最后得到的7*7ssm上每个点当成36帧网格的SSM，<mark class="marker-yellow">网络实际上没有学习到fine-ssm，而是选择了coarse-ssm的最优解，导致fine-ssm每个都是纯色矩阵，对应coarse-ssm的一个像素</mark>（实测fine-ssm组内两两余弦恒在0.99，300epoch不动）。 改成逐组监督后，组与组不再能互相“平均抵消”， 且目标分辨率从49格/张提到36帧/格，周期结构可分辨。</p>
 <p style="text-align:justify;">补充：我可能有点太小看cls损失的能量了，它的权重应该要比matrix损失小才对，从实验结果来看，<mark class="marker-yellow">cls损失完全把matrix损失压着打</mark>（对应日志logs grid2 long2)，而且应该给它们用单独的优化器才对，现在的优化器和train的是一样的，导致loss权重更新太慢了，<mark class="marker-yellow">现在选用了单独的优化器以及warmup，先训练matrix损失，保证网络能学到纹理矩阵，再训练cls损失。</mark></p>
+<figure class="image image_resized" style="width:68.96%;"><img src="/grid2_long2_matrixviz.jpg"></figure>
 <p style="text-align:justify;">3、关于时间压缩到图像上这个策略，其实就是一行行按顺序排列若干压缩帧数：</p>
 <figure class="image"><img src="/1789643998044.jpg"></figure>
 <p style="text-align:justify;">时间信息即这种蛇形的排列顺序，想让网络学习到帧与帧之间的关系信息，只需要让卷积感受野覆盖到至少两帧即可（我的理解是这样的，这对应的是分支B，使用2D卷积代替3D卷积），这里存在一个小问题，那就是由于卷积是个正方形的形状，<mark class="marker-yellow">所以假设卷积核中心在f8对应的点位，那么它不仅会卷积到f7和f9这两个相邻帧的信息，还会卷积到1、2、3和13、14、15的信息，扩展到7*7超级帧特征图时，这种卷积方式会同时囊括360帧的信息，不知道是好是坏。</mark></p>
@@ -24,5 +25,6 @@ dateCreated: 2026-09-17T09:00:57.762Z
 <p style="text-align:justify;">&nbsp;</p>
 <p style="text-align:justify;"><strong>【Then：】</strong></p>
 <p style="text-align:justify;"><strong>（这两个问题暂时没有验证真伪，只是想法，当前应该先解决过拟合以及分类准确率严重偏移，网络捷径学习的问题！！）</strong></p>
+<figure class="image image_resized" style="width:65.59%;"><img src="/grid2_long2_testacc.jpg"></figure>
 <p style="text-align:justify;">1、看看新实验的结果，看看有没有必要扩大通道数，目前的通道数应该是对标wya的，<mark class="marker-yellow">但考虑到我处理的是超长序列，所以通道数应该要比他大才行？</mark></p>
 <p style="text-align:justify;">2、蛇形排列有点粗糙，正如上面分析，<mark class="marker-yellow">卷积时没有非常严格地引入时序信息，网络很可能没办法分辨相邻帧哪个是先哪个是后，也许应该加入位置编码？</mark></p>
